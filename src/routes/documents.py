@@ -8,7 +8,9 @@ from src.routes.user import login_required
 documents_bp = Blueprint('documents', __name__)
 
 UPLOAD_FOLDER = os.environ.get('UPLOADS_DIR', '/tmp/vdr_uploads')
-RAILWAY_MODE = os.environ.get('RAILWAY_STATIC_URL') is not None
+# Enable file uploads when using Azure SQL, disable only for Railway + SQLite
+AZURE_SQL_MODE = 'mssql' in os.environ.get('DATABASE_URL', '')
+RAILWAY_MODE = os.environ.get('RAILWAY_STATIC_URL') is not None and not AZURE_SQL_MODE
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'}
 
 def allowed_file(filename):
