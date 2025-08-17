@@ -22,16 +22,34 @@ app.register_blueprint(documents_bp, url_prefix='/api')
 app.register_blueprint(qa_bp, url_prefix='/api')
 app.register_blueprint(folders_bp, url_prefix='/api')
 
-# Database configuration - Railway compatible with in-memory SQLite
-# Use in-memory database that doesn't require file system access
-database_path = os.environ.get('DATABASE_URL', 'sqlite:///:memory:')
-app.config['SQLALCHEMY_DATABASE_URI'] = database_path
+# Database configuration - Azure SQL Database
+# Use Azure SQL for persistent storage
+def get_database_url():
+    # Check for full DATABASE_URL first (for Railway environment variables)
+    database_url = os.environ.get('DATABASE_URL')
+    if database_url:
+        return database_url
+    
+    # Build from individual components (fallback)
+    server = os.environ.get('DB_SERVER', 'skapaserver.database.windows.net')
+    database = os.environ.get('DB_NAME', 'VDR')
+    username = os.environ.get('DB_USER', 'CloudSA65310c01')
+    password = os.environ.get('DB_PASSWORD', '')
+    
+    if password:
+        # SQL Server connection string for SQLAlchemy
+        return f"mssql+pyodbc://{username}:{password}@{server}/{database}?driver=ODBC+Driver+18+for+SQL+Server&Encrypt=yes&TrustServerCertificate=no&Connection+Timeout=30"
+    else:
+        # Fallback to in-memory for development
+        return 'sqlite:///:memory:'
+
+app.config['SQLALCHEMY_DATABASE_URI'] = get_database_url()
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
-# For Railway: disable file uploads since filesystem is read-only
-# File uploads will be disabled in this Railway version
-RAILWAY_MODE = os.environ.get('RAILWAY_STATIC_URL') is not None
+# Enable file uploads when using Azure SQL (persistent storage)
+AZURE_SQL_MODE = 'mssql' in app.config['SQLALCHEMY_DATABASE_URI']
+RAILWAY_MODE = os.environ.get('RAILWAY_STATIC_URL') is not None and not AZURE_SQL_MODE
 
 db.init_app(app)
 with app.app_context():
