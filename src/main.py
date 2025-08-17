@@ -37,8 +37,8 @@ def get_database_url():
     password = os.environ.get('DB_PASSWORD', '')
     
     if password:
-        # SQL Server connection string for SQLAlchemy
-        return f"mssql+pyodbc://{username}:{password}@{server}/{database}?driver=ODBC+Driver+18+for+SQL+Server&Encrypt=yes&TrustServerCertificate=no&Connection+Timeout=30"
+        # SQL Server connection string for SQLAlchemy with pymssql (Railway compatible)
+        return f"mssql+pymssql://{username}:{password}@{server}/{database}?charset=utf8"
     else:
         # Fallback to in-memory for development
         return 'sqlite:///:memory:'
