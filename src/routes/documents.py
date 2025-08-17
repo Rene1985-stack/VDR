@@ -7,7 +7,7 @@ from src.routes.user import login_required
 
 documents_bp = Blueprint('documents', __name__)
 
-UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'uploads')
+UPLOAD_FOLDER = os.environ.get('UPLOADS_DIR', '/tmp/vdr_uploads')
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'}
 
 def allowed_file(filename):
