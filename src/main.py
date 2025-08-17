@@ -22,10 +22,16 @@ app.register_blueprint(documents_bp, url_prefix='/api')
 app.register_blueprint(qa_bp, url_prefix='/api')
 app.register_blueprint(folders_bp, url_prefix='/api')
 
-# Database configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'database', 'app.db')}"
+# Database configuration - Railway compatible
+# Use /tmp for writable storage on Railway
+database_path = os.environ.get('DATABASE_URL', f"sqlite:///tmp/vdr_app.db")
+app.config['SQLALCHEMY_DATABASE_URI'] = database_path
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+
+# Create uploads directory in /tmp for Railway
+uploads_dir = os.environ.get('UPLOADS_DIR', '/tmp/vdr_uploads')
+os.makedirs(uploads_dir, exist_ok=True)
 
 db.init_app(app)
 with app.app_context():
