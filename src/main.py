@@ -23,25 +23,28 @@ app.register_blueprint(qa_bp, url_prefix='/api')
 app.register_blueprint(folders_bp, url_prefix='/api')
 
 # Database configuration - Azure SQL Database
-# Use Azure SQL for persistent storage
+# Database configuration - Individual SQL environment variables (like other project)
 def get_database_url():
-    # Check for full DATABASE_URL first (for Railway environment variables)
+    # Use individual SQL environment variables (preferred method)
+    server = os.environ.get('SQL_SERVER')
+    database = os.environ.get('SQL_DATABASE') 
+    username = os.environ.get('SQL_USER')
+    password = os.environ.get('SQL_PASSWORD')
+    port = os.environ.get('SQL_PORT', '1433')
+    
+    # Check if all required SQL variables are present
+    if all([server, database, username, password]):
+        # SQL Server connection string for SQLAlchemy with pymssql (Railway compatible)
+        return f"mssql+pymssql://{username}:{password}@{server}:{port}/{database}?charset=utf8"
+    
+    # Fallback: Check for full DATABASE_URL
     database_url = os.environ.get('DATABASE_URL')
     if database_url:
         return database_url
     
-    # Build from individual components (fallback)
-    server = os.environ.get('DB_SERVER', 'skapaserver.database.windows.net')
-    database = os.environ.get('DB_NAME', 'VDR')
-    username = os.environ.get('DB_USER', 'CloudSA65310c01')
-    password = os.environ.get('DB_PASSWORD', '')
-    
-    if password:
-        # SQL Server connection string for SQLAlchemy with pymssql (Railway compatible)
-        return f"mssql+pymssql://{username}:{password}@{server}/{database}?charset=utf8"
-    else:
-        # Fallback to in-memory for development
-        return 'sqlite:///:memory:'
+    # Final fallback: in-memory for development
+    print("⚠️  No SQL variables found, using in-memory database for development")
+    return 'sqlite:///:memory:'
 
 app.config['SQLALCHEMY_DATABASE_URI'] = get_database_url()
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
