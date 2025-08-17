@@ -8,6 +8,7 @@ from src.routes.user import login_required
 documents_bp = Blueprint('documents', __name__)
 
 UPLOAD_FOLDER = os.environ.get('UPLOADS_DIR', '/tmp/vdr_uploads')
+RAILWAY_MODE = os.environ.get('RAILWAY_STATIC_URL') is not None
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'}
 
 def allowed_file(filename):
@@ -33,6 +34,10 @@ def get_documents():
 @documents_bp.route('/documents', methods=['POST'])
 @login_required
 def upload_document():
+    # Check if running on Railway - disable file uploads
+    if RAILWAY_MODE:
+        return jsonify({'error': 'File uploads are disabled on Railway due to read-only filesystem. Use local deployment or Azure for file uploads.'}), 400
+    
     if 'file' not in request.files:
         return jsonify({'error': 'No file provided'}), 400
     
